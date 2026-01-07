@@ -261,12 +261,14 @@
             const weight = parseFloat(document.getElementById('weight').value) || 0;
             const time = parseFloat(document.getElementById('printTime').value) || 0;
             const isRush = document.getElementById('rushOrder').checked;
-            const jobType = document.getElementById('jobType').value;
+            const jobTypeSelect = document.getElementById('jobType');
+            const jobType = jobTypeSelect.value;
+            const jobTypeText = jobTypeSelect.options[jobTypeSelect.selectedIndex].text;
             
             // Get dropdown data
             const materialSelect = document.getElementById('materialType');
             const materialCostPerGram = parseFloat(materialSelect.options[materialSelect.selectedIndex].dataset.cost);
-            const materialName = materialSelect.value;
+            const materialName = materialSelect.options[materialSelect.selectedIndex].text; // Use Full Text
 
             // Base Costs
             let designSelect = document.getElementById('designService');
@@ -282,7 +284,7 @@
             if (laborSelect.value === 'special') {
                 specialLaborInput.classList.remove('hidden');
                 laborCost = parseFloat(document.getElementById('customLaborCost').value) || 0;
-                laborName = "Special Case (Discussed Price)"; // Updated to match your form's exact text
+                laborName = "Special Case (Discussed Price)"; 
             } else {
                 specialLaborInput.classList.add('hidden');
                 laborCost = parseFloat(laborSelect.options[laborSelect.selectedIndex].dataset.cost);
@@ -330,6 +332,7 @@
                 laborCost: laborCost.toFixed(2),
                 rushCost: costRush.toFixed(2),
                 jobType: jobType,
+                jobTypeText: jobTypeText,
                 discountNote: discountNote,
                 total: currentTotal
             };
@@ -373,18 +376,23 @@
             
             formData.append('entry.1856043627', studentName);      // Client Name
             formData.append('entry.583953865', projectName);       // Project Name
-            formData.append('entry.60012897', projectDesc);        // Project Description (Do I work?)
+            formData.append('entry.60012897', projectDesc);        // Project Description
             
+            // IMPORTANT: Sending breakdown.materialName (Full text) instead of value, as required by Google Forms
             formData.append('entry.397722630', breakdown.materialName); // Material
             formData.append('entry.1657202976', breakdown.weight);      // Weight
             formData.append('entry.1538694152', breakdown.hours);       // Time
             
-            // Note: I mapped 241745105 to Design and 1261621401 to Labor based on the Special Case text match
-            formData.append('entry.241745105', breakdown.designName);   // Design
-            formData.append('entry.1261621401', breakdown.laborName);   // Labor
+            // SWAPPED IDs based on pre-fill link evidence:
+            // 1261621401 was pre-filled with "Special Case", so it must be DESIGN based on your form (if you have special case in design) or Labor.
+            // BUT: 241745105 was pre-filled with "Moderate...". That is unambiguously LABOR.
+            // Therefore: 241745105 = Labor, 1261621401 = Design.
+            
+            formData.append('entry.1261621401', breakdown.designName);   // Design
+            formData.append('entry.241745105', breakdown.laborName);   // Labor
             
             formData.append('entry.410231557', breakdown.rushCost > 0 ? "Yes" : "No"); // Rush
-            formData.append('entry.1209475786', breakdown.jobType);     // Job Type
+            formData.append('entry.1209475786', breakdown.jobTypeText); // Job Type (Full text)
             formData.append('entry.1003097008', breakdown.total);       // Total Cost
 
             try {
