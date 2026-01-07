@@ -3,175 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TalonTech Pro Invoice</title>
+    <title>TalonTech 3D Lab Log</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PDF Generation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        :root { --ea-navy: #13294b; --ea-gold: #C5B783; --ea-white: #FFFFFF; }
-        body { background-color: var(--ea-navy); color: var(--ea-white); font-family: sans-serif; }
-        .card { background-color: rgba(255, 255, 255, 0.05); border: 2px solid var(--ea-gold); }
-        .accent-text { color: var(--ea-gold); }
-        input, select { background-color: #1e3a5f !important; color: white !important; border: 1px solid #334155 !important; }
-        .result-box { background-color: var(--ea-gold); color: var(--ea-navy); }
-        .btn-submit { background-color: #10b981; transition: transform 0.1s; }
-        .btn-submit:active { transform: scale(0.98); }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        /* Everett Alvarez School Colors */
+        .bg-eagle-navy { background-color: #00205B; } /* Deep Navy */
+        .text-eagle-navy { color: #00205B; }
+        .bg-eagle-gold { background-color: #C5B358; } /* Vegas Gold style */
+        .text-eagle-gold { color: #C5B358; }
+        .border-eagle-gold { border-color: #C5B358; }
+        .ring-eagle-gold { --tw-ring-color: #C5B358; }
+        
+        .eagle-btn {
+            transition: all 0.2s;
+        }
+        .eagle-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Custom Input Styling */
+        .input-field {
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #C5B358;
+            box-shadow: 0 0 0 3px rgba(197, 179, 88, 0.2);
+        }
     </style>
 </head>
-<body class="p-4 flex flex-col items-center min-h-screen">
+<body class="bg-gray-100 min-h-screen pb-10">
 
-    <div id="app-card" class="max-w-md w-full card rounded-2xl shadow-2xl p-6 my-4">
-        <header class="text-center mb-6">
-            <h1 class="text-3xl font-black accent-text uppercase tracking-wider">TalonTech Club</h1>
-            <p class="text-sm font-bold opacity-90 mt-1 uppercase">Official Invoice System</p>
-            <div class="h-1 w-24 bg-white mx-auto mt-2 rounded-full"></div>
-        </header>
-
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-[10px] font-bold uppercase mb-1 accent-text">Student Name</label>
-                    <input type="text" id="studentName" placeholder="Name" class="w-full p-2 rounded-lg outline-none text-sm">
+    <!-- Header -->
+    <header class="bg-eagle-navy text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-eagle-gold rounded-full flex items-center justify-center text-eagle-navy font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-feather-pointed"></i>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase mb-1 accent-text">Project Name</label>
-                    <input type="text" id="projectName" placeholder="Project" class="w-full p-2 rounded-lg outline-none text-sm">
+                    <h1 class="font-bold text-lg leading-tight">TalonTech 3D Lab</h1>
+                    <p class="text-xs text-gray-300">Estimator & Log</p>
+                </div>
+            </div>
+            <button onclick="resetApp()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-white transition">
+                New
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto px-4 py-6 space-y-6">
+
+        <!-- Success Message (Hidden by default) -->
+        <div id="success-screen" class="hidden flex-col items-center justify-center py-10 space-y-4 animate-fade-in">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-4xl shadow-inner mb-2">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-eagle-navy text-center">Logged & Saved!</h2>
+            <p class="text-gray-600 text-center max-w-xs">Your project has been recorded in the TalonTech database. Please download your receipt below.</p>
+            
+            <button id="download-receipt-btn" class="w-full bg-eagle-gold hover:bg-yellow-500 text-eagle-navy font-bold py-3 px-6 rounded-lg shadow-md eagle-btn flex items-center justify-center gap-2 mt-4">
+                <i class="fa-solid fa-file-pdf"></i> Download Receipt
+            </button>
+            
+            <button onclick="resetApp()" class="text-sm text-gray-500 hover:text-eagle-navy underline mt-4">
+                Start New Project
+            </button>
+        </div>
+
+        <!-- The Calculator Form -->
+        <div id="calculator-form" class="space-y-6">
+            
+            <!-- Intro Card -->
+            <!-- 1. Client Info (Renamed from Student Info) -->
+            <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+                <h3 class="text-sm font-semibold text-eagle-navy uppercase tracking-wider border-b pb-2 mb-2">
+                    <i class="fa-solid fa-id-card mr-2"></i> Client Info
+                </h3>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Client Name</label>
+                    <input type="text" id="studentName" placeholder="e.g. John Doe / Ms. Smith" class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Project Name</label>
+                    <input type="text" id="projectName" placeholder="e.g. Physics Bridge Component" class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Project Description</label>
+                    <textarea id="projectDescription" rows="2" placeholder="Brief description (e.g., replacement gear, art project)..." class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900"></textarea>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-[10px] font-bold uppercase mb-1 accent-text">1. Design Source</label>
-                <select id="design" class="w-full p-2 rounded-lg outline-none text-sm" onchange="calc()">
-                    <option value="1">Personal Design ($1)</option>
-                    <option value="2">Online Design ($2)</option>
-                    <option value="5.5">Club-Assisted/Modified ($5.50)</option>
-                </select>
+            <!-- 2. Materials & Time -->
+            <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+                <h3 class="text-sm font-semibold text-eagle-navy uppercase tracking-wider border-b pb-2 mb-2">
+                    <i class="fa-solid fa-cube mr-2"></i> Print Details
+                </h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Material Type</label>
+                        <select id="materialType" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
+                            <option value="PLA" data-cost="0.05">PLA / PLA+ (Standard) - $0.05/g</option>
+                            <option value="PETG" data-cost="0.06">PETG (Strong) - $0.06/g</option>
+                            <option value="TPU" data-cost="0.08">TPU (Flexible) - $0.08/g</option>
+                            <option value="ABS" data-cost="0.06">ABS / ASA (Heat Resist) - $0.06/g</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Weight (grams)</label>
+                        <div class="relative">
+                            <input type="number" id="weight" placeholder="0" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 pl-3">
+                            <span class="absolute right-3 top-2.5 text-gray-400 text-sm">g</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Print Time</label>
+                        <div class="relative">
+                            <input type="number" id="printTime" placeholder="0" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 pl-3">
+                            <span class="absolute right-3 top-2.5 text-gray-400 text-sm">hr</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <!-- 3. Labor & Design -->
+            <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+                <h3 class="text-sm font-semibold text-eagle-navy uppercase tracking-wider border-b pb-2 mb-2">
+                    <i class="fa-solid fa-hands-tools mr-2"></i> Services
+                </h3>
+
                 <div>
-                    <label class="block text-[10px] font-bold uppercase mb-1 accent-text">2. Filament Type</label>
-                    <select id="filamentType" class="w-full p-2 rounded-lg outline-none text-sm" onchange="calc()">
-                        <option value="0.05">PLA</option>
-                        <option value="0.075">PETG</option>
-                        <option value="0.10">ABS</option>
-                        <option value="0.125">TPU/Specialty</option>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Design Service</label>
+                    <select id="designService" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
+                        <option value="none" data-cost="0">Plug-and-Play (Ready to Print) - $0</option>
+                        <option value="minor" data-cost="2.00">Minor Help (Scale/Orient) - $2.00</option>
+                        <option value="major" data-cost="5.00">Major Help (Repair/Redesign) - $5.00</option>
                     </select>
                 </div>
+
                 <div>
-                    <label class="block text-[10px] font-bold uppercase mb-1 accent-text">Grams Used</label>
-                    <input type="number" id="grams" placeholder="0" class="w-full p-2 rounded-lg outline-none text-sm" oninput="calc()">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Post-Processing Tier</label>
+                    <select id="laborService" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
+                        <option value="none" data-cost="0">None (Student Removes) - $0</option>
+                        <option value="light" data-cost="2.00">Light (Remove Supports) - $2.00</option>
+                        <option value="moderate" data-cost="4.00">Moderate (Minor Sanding) - $4.00</option>
+                        <option value="heavy" data-cost="6.00">Heavy (Glue/Fine Sanding) - $6.00</option>
+                        <option value="special" data-cost="0">Special Case (Discussed Price)</option>
+                    </select>
+                    
+                    <div id="specialLaborInput" class="hidden mt-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Agreed Labor Fee ($)</label>
+                        <input type="number" id="customLaborCost" placeholder="0.00" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900">
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-[10px] font-bold uppercase mb-1 accent-text">3. Print Time</label>
-                <select id="time" class="w-full p-2 rounded-lg outline-none text-sm" onchange="calc()">
-                    <option value="1">Under 1 hour ($1)</option>
-                    <option value="3">1–3 hours ($3)</option>
-                    <option value="6.5">3–6 hours ($6.50)</option>
-                    <option value="10">6–12 hours ($10)</option>
-                    <option value="15">12–24 hours ($15)</option>
-                    <option value="25">Over 24 hours ($25)</option>
-                </select>
+            <!-- 4. Job Context & Discounts -->
+            <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+                <h3 class="text-sm font-semibold text-eagle-navy uppercase tracking-wider border-b pb-2 mb-2">
+                    <i class="fa-solid fa-clipboard-check mr-2"></i> Job Details
+                </h3>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Job Type</label>
+                    <select id="jobType" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
+                        <option value="standard">Standard (Personal/Hobby)</option>
+                        <option value="class">Class Assignment (Waive Design Fee)</option>
+                        <option value="club">TalonTech/Outreach (Waive Services)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <input type="checkbox" id="rushOrder" onchange="calculateTotal()" class="w-5 h-5 text-eagle-navy focus:ring-eagle-gold border-gray-300 rounded">
+                    <label for="rushOrder" class="text-sm font-medium text-gray-800 flex-1">
+                        Rush / Priority Print
+                        <span class="block text-xs text-gray-500 font-normal">Jump the queue (+ $5.00)</span>
+                    </label>
+                    <i class="fa-solid fa-stopwatch text-gray-400"></i>
+                </div>
             </div>
 
-            <div>
-                <label class="block text-[10px] font-bold uppercase mb-1 accent-text">4. Post-Processing & Labor</label>
-                <select id="post" class="w-full p-2 rounded-lg outline-none text-sm" onchange="calc()">
-                    <option value="0">None ($0)</option>
-                    <option value="1.5">Light Support Removal ($1.50)</option>
-                    <option value="4">Detailed Cleanup/Sanding ($4)</option>
-                    <option value="6">Major/Heavy Support Removal ($6)</option>
-                    <option value="10">Complex/Internal Support Release ($10)</option>
-                    <option value="15">Full Assembly & Painting ($15)</option>
-                </select>
+            <!-- Total Card -->
+            <div class="bg-eagle-navy rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-eagle-gold rounded-full opacity-20 blur-xl"></div>
+                
+                <h3 class="text-eagle-gold text-sm font-bold uppercase tracking-widest mb-1">Suggested Donation</h3>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-4xl font-bold">$</span>
+                    <span id="displayTotal" class="text-5xl font-extrabold tracking-tighter">0.00</span>
+                </div>
+                <div id="discountBadge" class="hidden inline-block mt-2 bg-green-500/20 text-green-300 text-xs font-bold px-2 py-1 rounded">
+                    Educational Discount Applied
+                </div>
+                <p class="text-blue-200 text-xs mt-2">Includes material cost, machine wear & tear, and club labor fees.</p>
             </div>
+
+            <!-- Action Button -->
+            <button onclick="submitLog()" class="w-full bg-eagle-gold hover:bg-yellow-500 text-eagle-navy font-bold text-lg py-4 px-6 rounded-xl shadow-lg eagle-btn flex items-center justify-center gap-3">
+                <span>Submit & Log Print</span>
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
         </div>
 
-        <div class="mt-6 p-4 result-box rounded-xl text-center shadow-lg">
-            <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Suggested Donation</p>
-            <h2 id="totalDisplay" class="text-4xl font-black mt-1">$3.00</h2>
-        </div>
+        <!-- Footer -->
+        <footer class="text-center text-gray-400 text-xs py-4">
+            <p>Everett Alvarez High School • TalonTech</p>
+            <p class="mt-1 opacity-60">Empowering Makers</p>
+        </footer>
 
-        <button onclick="submitInvoice()" class="w-full mt-4 py-3 rounded-xl text-sm font-bold uppercase tracking-widest btn-submit text-white shadow-lg">
-            Submit & Download PDF
-        </button>
-    </div>
-
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(submitted){showSuccess();}"></iframe>
+    </main>
 
     <script>
-        let submitted = false;
-        window.jsPDF = window.jspdf.jsPDF;
+        // --- CONFIGURATION START ---
+        
+        // Pricing Configuration
+        const HOURLY_MACHINE_RATE = 0.50; // $0.50 per hour of print time
+        const RUSH_FEE = 5.00;
 
-        function calc() {
-            const d = parseFloat(document.getElementById('design').value);
-            const fRate = parseFloat(document.getElementById('filamentType').value);
-            const g = parseFloat(document.getElementById('grams').value) || 0;
-            const t = parseFloat(document.getElementById('time').value);
-            const p = parseFloat(document.getElementById('post').value);
+        /* GOOGLE SHEETS INTEGRATION
+           URL has been updated with your specific form ID.
+        */
+        const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOLnBrUeVS3pbt-B4nr3Von5CRv5YE4sPyrGYeNFnQ2EhEdA/formResponse"; 
+        
+        // --- CONFIGURATION END ---
+
+        // State variables
+        let currentTotal = 0.00;
+        let breakdown = {};
+
+        // 1. Calculation Logic
+        function calculateTotal() {
+            // Get inputs
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+            const time = parseFloat(document.getElementById('printTime').value) || 0;
+            const isRush = document.getElementById('rushOrder').checked;
+            const jobType = document.getElementById('jobType').value;
             
-            let total = d + (g * fRate) + t + p;
-            if (total < 3) total = 3; 
+            // Get dropdown data
+            const materialSelect = document.getElementById('materialType');
+            const materialCostPerGram = parseFloat(materialSelect.options[materialSelect.selectedIndex].dataset.cost);
+            const materialName = materialSelect.value;
+
+            // Base Costs
+            let designSelect = document.getElementById('designService');
+            let designCost = parseFloat(designSelect.options[designSelect.selectedIndex].dataset.cost);
+            let designName = designSelect.options[designSelect.selectedIndex].text;
+
+            // Labor Cost Logic (Updated for Special Case)
+            let laborSelect = document.getElementById('laborService');
+            let laborCost = 0;
+            let laborName = laborSelect.options[laborSelect.selectedIndex].text;
+            const specialLaborInput = document.getElementById('specialLaborInput');
+
+            if (laborSelect.value === 'special') {
+                specialLaborInput.classList.remove('hidden');
+                laborCost = parseFloat(document.getElementById('customLaborCost').value) || 0;
+                laborName = "Special Case (Discussed Price)"; // Updated to match your form's exact text
+            } else {
+                specialLaborInput.classList.add('hidden');
+                laborCost = parseFloat(laborSelect.options[laborSelect.selectedIndex].dataset.cost);
+            }
+
+            const costMaterial = weight * materialCostPerGram;
+            const costMachine = time * HOURLY_MACHINE_RATE;
+            const costRush = isRush ? RUSH_FEE : 0;
+
+            // Apply Discounts Logic
+            let discountNote = "";
+            let discountAmount = 0;
+
+            if (jobType === 'class') {
+                // Class Project: Waive Design Fee
+                if (designCost > 0) {
+                    discountAmount += designCost;
+                    discountNote = "Class Project (Design Waived)";
+                    designCost = 0; 
+                }
+            } else if (jobType === 'club') {
+                // TalonTech/Outreach: Waive Design & Labor
+                let saving = designCost + laborCost;
+                if (saving > 0) {
+                    discountAmount += saving;
+                    discountNote = "Club/Outreach (Services Waived)";
+                    designCost = 0;
+                    laborCost = 0;
+                }
+            }
+
+            const total = costMaterial + costMachine + designCost + laborCost + costRush;
+
+            // Update State
+            currentTotal = total.toFixed(2);
+            breakdown = {
+                materialName: materialName,
+                weight: weight,
+                materialCost: costMaterial.toFixed(2),
+                hours: time,
+                machineCost: costMachine.toFixed(2),
+                designName: designName,
+                designCost: designCost.toFixed(2),
+                laborName: laborName,
+                laborCost: laborCost.toFixed(2),
+                rushCost: costRush.toFixed(2),
+                jobType: jobType,
+                discountNote: discountNote,
+                total: currentTotal
+            };
+
+            // Update UI
+            document.getElementById('displayTotal').innerText = currentTotal;
             
-            document.getElementById('totalDisplay').innerText = `$${total.toFixed(2)}`;
-            return total.toFixed(2);
+            // Show discount badge if active
+            const badge = document.getElementById('discountBadge');
+            if (discountNote) {
+                badge.classList.remove('hidden');
+                badge.innerText = discountNote;
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
-        function submitInvoice() {
-            const name = document.getElementById('studentName').value;
-            const proj = document.getElementById('projectName').value;
-            const fil = document.getElementById('filamentType').options[document.getElementById('filamentType').selectedIndex].text;
-            const grams = document.getElementById('grams').value || "0";
-            const time = document.getElementById('time').options[document.getElementById('time').selectedIndex].text;
-            const post = document.getElementById('post').options[document.getElementById('post').selectedIndex].text;
-            const design = document.getElementById('design').options[document.getElementById('design').selectedIndex].text;
-            const total = calc();
+        // 2. Submission Logic
+        async function submitLog() {
+            const studentName = document.getElementById('studentName').value;
+            const projectName = document.getElementById('projectName').value;
+            const projectDesc = document.getElementById('projectDescription').value;
 
-            if(!name || !proj) { alert("Please enter Student and Project names."); return; }
+            if (!studentName || !projectName) {
+                alert("Please enter Client Name and Project Name.");
+                return;
+            }
 
-            const formID = "1FAIpQLSekNv5fJmGCELXyxyHY4ImsaVjtcpg43m3n2T0wKDpg1LB7FQ";
-            const baseURL = `https://docs.google.com/forms/d/e/${formID}/formResponse`;
+            if (currentTotal == 0) {
+                 if(!confirm("The total is $0.00. Are you sure you want to submit?")) return;
+            }
+
+            // Button Loading State
+            const btn = document.querySelector('button[onclick="submitLog()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging...';
+            btn.disabled = true;
+
+            // Prepare Data for Google Form using extracted IDs
+            const formData = new FormData();
             
-            // Mapping to your exact entry IDs from the link provided
-            const query = `?entry.1416729802=${encodeURIComponent(name)}` +
-                          `&entry.465402565=${encodeURIComponent(proj)}` +
-                          `&entry.2021312819=${encodeURIComponent(design)}` +
-                          `&entry.58770648=${encodeURIComponent(total)}` +
-                          `&entry.827172509=${encodeURIComponent(grams)}` +
-                          `&entry.1195136044=${encodeURIComponent(fil)}` +
-                          `&entry.1670091512=${encodeURIComponent(time)}` +
-                          `&entry.654354275=${encodeURIComponent(post)}` +
-                          `&submit=Submit`;
+            formData.append('entry.1856043627', studentName);      // Client Name
+            formData.append('entry.583953865', projectName);       // Project Name
+            formData.append('entry.60012897', projectDesc);        // Project Description (Do I work?)
+            
+            formData.append('entry.397722630', breakdown.materialName); // Material
+            formData.append('entry.1657202976', breakdown.weight);      // Weight
+            formData.append('entry.1538694152', breakdown.hours);       // Time
+            
+            // Note: I mapped 241745105 to Design and 1261621401 to Labor based on the Special Case text match
+            formData.append('entry.241745105', breakdown.designName);   // Design
+            formData.append('entry.1261621401', breakdown.laborName);   // Labor
+            
+            formData.append('entry.410231557', breakdown.rushCost > 0 ? "Yes" : "No"); // Rush
+            formData.append('entry.1209475786', breakdown.jobType);     // Job Type
+            formData.append('entry.1003097008', breakdown.total);       // Total Cost
 
-            submitted = true;
-            document.getElementById('hidden_iframe').src = baseURL + query;
-            generatePDF(name, proj, fil, grams, time, post, total);
-        }
+            try {
+                // POST to Google Form
+                await fetch(GOOGLE_FORM_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: formData
+                });
+                
+                showSuccess();
 
-        function generatePDF(n, pr, f, g, t, po, tot) {
-            const doc = new jsPDF();
-            doc.setFillColor(19, 41, 75); doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(255, 255, 255); doc.setFontSize(20); doc.text("TALONTECH CLUB INVOICE", 20, 25);
-            doc.setTextColor(0, 0, 0); doc.setFontSize(12);
-            doc.text(`Student: ${n}`, 20, 55); doc.text(`Project: ${pr}`, 20, 65);
-            doc.line(20, 75, 190, 75);
-            doc.text(`Filament: ${f} (${g}g)`, 20, 85);
-            doc.text(`Print Time: ${t}`, 20, 95);
-            doc.text(`Labor: ${po}`, 20, 105);
-            doc.setFontSize(16); doc.text(`TOTAL SUGGESTED DONATION: $${tot}`, 20, 125);
-            doc.save(`TalonTech_${n}.pdf`);
+            } catch (error) {
+                console.error('Error logging print:', error);
+                alert("There was an error logging your print. Please try again or notify the treasurer.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         function showSuccess() {
-            document.getElementById('app-card').innerHTML = `
-                <div class="text-center py-10">
-                    <div class="text-5xl mb-4">🦅</div>
-                    <h2 class="text-2xl font-black accent-text uppercase tracking-widest">Logged & Saved!</h2>
-                    <p class="mt-2 text-sm text-slate-300 px-4">The invoice is in your downloads. Your print has been recorded in the club logs.</p>
-                    <button onclick="location.reload()" class="mt-8 px-8 py-3 bg-blue-900 border-2 border-gold accent-text rounded-xl font-bold uppercase">Next Print</button>
-                </div>`;
+            document.getElementById('calculator-form').classList.add('hidden');
+            document.getElementById('success-screen').classList.remove('hidden');
+            document.getElementById('success-screen').classList.add('flex');
+            
+            // Attach PDF generation to the button now that we have locked data
+            document.getElementById('download-receipt-btn').onclick = generatePDF;
         }
+
+        function resetApp() {
+            document.getElementById('studentName').value = '';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            document.getElementById('weight').value = '';
+            document.getElementById('printTime').value = '';
+            document.getElementById('materialType').selectedIndex = 0;
+            document.getElementById('designService').selectedIndex = 0;
+            document.getElementById('laborService').selectedIndex = 0;
+            document.getElementById('jobType').selectedIndex = 0;
+            document.getElementById('rushOrder').checked = false;
+            document.getElementById('customLaborCost').value = '';
+            document.getElementById('specialLaborInput').classList.add('hidden');
+            
+            calculateTotal();
+
+            document.getElementById('success-screen').classList.add('hidden');
+            document.getElementById('success-screen').classList.remove('flex');
+            document.getElementById('calculator-form').classList.remove('hidden');
+            
+            const btn = document.querySelector('button[onclick="submitLog()"]');
+            btn.innerHTML = '<span>Submit & Log Print</span><i class="fa-solid fa-paper-plane"></i>';
+            btn.disabled = false;
+        }
+
+        // 3. PDF Generation Logic
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const name = document.getElementById('studentName').value || "Client";
+            const project = document.getElementById('projectName').value || "Project";
+            const description = document.getElementById('projectDescription').value || "";
+            const date = new Date().toLocaleDateString();
+
+            // Colors
+            const navy = [0, 32, 91]; // #00205B
+            const gold = [197, 179, 88]; // #C5B358
+
+            // --- Header ---
+            doc.setFillColor(...navy);
+            doc.rect(0, 0, 210, 40, 'F');
+            
+            doc.setTextColor(...gold);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("TALONTECH 3D LAB", 20, 20);
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(255, 255, 255);
+            doc.text("Everett Alvarez HS - Print Receipt", 20, 30);
+
+            // --- Info Section ---
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text(`Date: ${date}`, 150, 50);
+            doc.text(`Client: ${name}`, 20, 50);
+            doc.text(`Project: ${project}`, 20, 55);
+            
+            let yStart = 70; // Default table start
+
+            // Add description if it exists
+            if (description) {
+                doc.setTextColor(80, 80, 80);
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "italic");
+                doc.text(`Desc: ${description}`, 20, 60);
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                yStart = 75; // Push table down slightly
+            }
+            
+            // Job Type Tag
+            doc.setFont("helvetica", "bold");
+            let typeLabel = "Standard Job";
+            if (breakdown.jobType === 'class') typeLabel = "Class Assignment";
+            if (breakdown.jobType === 'club') typeLabel = "TalonTech / Outreach";
+            doc.text(`Type: ${typeLabel}`, 150, 55);
+
+            // --- Line Item Table ---
+            let y = yStart;
+            
+            // Table Header
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, y-5, 170, 8, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.text("Item", 25, y);
+            doc.text("Details", 80, y);
+            doc.text("Cost", 170, y);
+            y += 10;
+            doc.setFont("helvetica", "normal");
+
+            // Material
+            doc.text("Material", 25, y);
+            doc.text(`${breakdown.materialName} (${breakdown.weight}g @ $${document.querySelector('#materialType option:checked').dataset.cost}/g)`, 80, y);
+            doc.text(`$${breakdown.materialCost}`, 170, y);
+            y += 10;
+
+            // Machine Time
+            doc.text("Machine Time", 25, y);
+            doc.text(`${breakdown.hours} hours @ $${HOURLY_MACHINE_RATE}/hr`, 80, y);
+            doc.text(`$${breakdown.machineCost}`, 170, y);
+            y += 10;
+
+            // Design
+            doc.text("Design Svc", 25, y);
+            let designNote = breakdown.designName.split(' - ')[0]; // Clean up name
+            doc.text(designNote, 80, y);
+            doc.text(`$${breakdown.designCost}`, 170, y);
+            y += 10;
+
+            // Labor
+            doc.text("Post-Process", 25, y);
+            let laborNote = breakdown.laborName.split(' - ')[0];
+            doc.text(laborNote, 80, y);
+            doc.text(`$${breakdown.laborCost}`, 170, y);
+            y += 10;
+
+            // Rush Fee
+            if (parseFloat(breakdown.rushCost) > 0) {
+                doc.setTextColor(200, 50, 50);
+                doc.text("Priority Fee", 25, y);
+                doc.text("Rush Order (Jump Queue)", 80, y);
+                doc.text(`$${breakdown.rushCost}`, 170, y);
+                doc.setTextColor(0, 0, 0);
+                y += 10;
+            }
+
+            // Discount Note in Table
+            if (breakdown.discountNote) {
+                doc.setTextColor(0, 100, 0);
+                doc.setFont("helvetica", "italic");
+                doc.text("Discount Applied:", 25, y);
+                doc.text(breakdown.discountNote, 80, y);
+                y += 10;
+                doc.setTextColor(0, 0, 0);
+                doc.setFont("helvetica", "normal");
+            }
+
+            // Line
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, y, 190, y);
+            y += 10;
+
+            // --- Total ---
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...navy);
+            doc.text("TOTAL DONATION:", 80, y);
+            doc.text(`$${breakdown.total}`, 170, y);
+
+            // --- Footer ---
+            y += 30;
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.setFont("helvetica", "italic");
+            doc.text("Thank you for supporting TalonTech.", 105, y, { align: "center" });
+            doc.text("Please present this receipt to the treasurer.", 105, y+5, { align: "center" });
+
+            // Save
+            doc.save(`${name.replace(/\s/g, '_')}_TalonTech_Receipt.pdf`);
+        }
+
+        // Initialize calc on load
+        calculateTotal();
+
     </script>
 </body>
 </html>
