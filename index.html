@@ -30,6 +30,20 @@
         .text-eagle-gold { color: #C5B358; }
         .border-eagle-gold { border-color: #C5B358; }
         .ring-eagle-gold { --tw-ring-color: #C5B358; }
+
+        .amd-active {
+            background-color: #C5B358;
+            color: #00205B;
+            border-color: #C5B358;
+            box-shadow: 0 0 0 3px rgba(197, 179, 88, 0.22);
+        }
+
+        .override-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 7rem;
+            gap: 0.75rem;
+            align-items: end;
+        }
         
         .eagle-btn {
             transition: all 0.2s;
@@ -110,6 +124,12 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">TalonTech Member <span class="font-normal text-gray-400">(optional)</span></label>
+                    <input type="text" id="talonTechMember" placeholder="Member name or ID" class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900">
+                    <p class="mt-1 text-xs text-gray-500">Record the member connected to this project. Use AMD below to apply the discount.</p>
+                </div>
+
+                <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Project Description</label>
                     <textarea id="projectDescription" rows="2" placeholder="Brief description (e.g., replacement gear, art project)..." class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900"></textarea>
                 </div>
@@ -125,10 +145,11 @@
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Material Type</label>
                         <select id="materialType" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
-                            <option value="PLA" data-cost="0.05">PLA / PLA+ (Standard) - $0.05/g</option>
-                            <option value="PETG" data-cost="0.06">PETG (Strong) - $0.06/g</option>
-                            <option value="TPU" data-cost="0.08">TPU (Flexible) - $0.08/g</option>
-                            <option value="ABS" data-cost="0.06">ABS / ASA (Heat Resist) - $0.06/g</option>
+                            <option value="PLA" data-cost="0.08">PLA / PLA+ (Standard) - $0.08/g</option>
+                            <option value="PETG" data-cost="0.10">PETG (Durable) - $0.10/g</option>
+                            <option value="ABS_ASA" data-cost="0.12">ABS / ASA (Heat/UV Resistant) - $0.12/g</option>
+                            <option value="TPU" data-cost="0.15">TPU (Flexible) - $0.15/g</option>
+                            <option value="SPECIALTY" data-cost="0.18">Specialty / Composite - $0.18/g</option>
                         </select>
                     </div>
 
@@ -148,6 +169,21 @@
                         </div>
                     </div>
                 </div>
+
+                <details class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <summary class="cursor-pointer text-xs font-semibold text-eagle-navy">Material & machine price overrides</summary>
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Material rate ($/g)</label>
+                            <input type="number" id="materialRateOverride" min="0" step="0.01" placeholder="Use selected rate" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Machine rate ($/hr)</label>
+                            <input type="number" id="machineRateOverride" min="0" step="0.25" placeholder="Use $1.50" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5">
+                        </div>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Leave blank to use the standard rates.</p>
+                </details>
             </div>
 
             <!-- 3. Labor & Design -->
@@ -160,25 +196,22 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1">Design Service</label>
                     <select id="designService" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
                         <option value="none" data-cost="0">Plug-and-Play (Ready to Print) - $0</option>
-                        <option value="minor" data-cost="2.00">Minor Help (Scale/Orient) - $2.00</option>
-                        <option value="major" data-cost="5.00">Major Help (Repair/Redesign) - $5.00</option>
+                        <option value="setup" data-cost="3.00">Basic Setup (Scale/Orient/Slice) - $3.00</option>
+                        <option value="repair" data-cost="8.00">File Repair / Simple Modification - $8.00</option>
+                        <option value="custom" data-cost="15.00">Custom CAD / Major Redesign - $15.00</option>
                     </select>
+                    <input type="number" id="designCostOverride" min="0" step="0.50" placeholder="Optional design fee override ($)" oninput="calculateTotal()" class="input-field mt-2 w-full border border-gray-300 rounded-lg p-2.5 text-sm">
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Post-Processing Tier</label>
                     <select id="laborService" onchange="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 bg-white">
                         <option value="none" data-cost="0">None (Student Removes) - $0</option>
-                        <option value="light" data-cost="2.00">Light (Remove Supports) - $2.00</option>
-                        <option value="moderate" data-cost="4.00">Moderate (Minor Sanding) - $4.00</option>
-                        <option value="heavy" data-cost="6.00">Heavy (Glue/Fine Sanding) - $6.00</option>
-                        <option value="special" data-cost="0">Special Case (Discussed Price)</option>
+                        <option value="light" data-cost="3.00">Light (Support Removal/Cleanup) - $3.00</option>
+                        <option value="moderate" data-cost="7.00">Moderate (Sanding/Assembly) - $7.00</option>
+                        <option value="heavy" data-cost="12.00">Heavy (Finish/Fine Assembly) - $12.00</option>
                     </select>
-                    
-                    <div id="specialLaborInput" class="hidden mt-2">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Agreed Labor Fee ($)</label>
-                        <input type="number" id="customLaborCost" placeholder="0.00" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5 text-gray-900">
-                    </div>
+                    <input type="number" id="laborCostOverride" min="0" step="0.50" placeholder="Optional post-processing fee override ($)" oninput="calculateTotal()" class="input-field mt-2 w-full border border-gray-300 rounded-lg p-2.5 text-sm">
                 </div>
             </div>
 
@@ -201,10 +234,21 @@
                     <input type="checkbox" id="rushOrder" onchange="calculateTotal()" class="w-5 h-5 text-eagle-navy focus:ring-eagle-gold border-gray-300 rounded">
                     <label for="rushOrder" class="text-sm font-medium text-gray-800 flex-1">
                         Rush / Priority Print
-                        <span class="block text-xs text-gray-500 font-normal">Jump the queue (+ $5.00)</span>
+                        <span class="block text-xs text-gray-500 font-normal">Priority handling (+ $8.00 standard)</span>
                     </label>
                     <i class="fa-solid fa-stopwatch text-gray-400"></i>
                 </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Rush fee override ($)</label>
+                    <input type="number" id="rushFeeOverride" min="0" step="0.50" placeholder="Use $8.00" oninput="calculateTotal()" class="input-field w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+
+                <button type="button" id="amdButton" aria-pressed="false" onclick="toggleAMD()" class="w-full border-2 border-eagle-gold text-eagle-navy bg-white hover:bg-yellow-50 font-bold py-3 px-4 rounded-lg eagle-btn flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-id-badge"></i>
+                    <span>Apply AMD — 40% Off</span>
+                </button>
+                <p class="text-xs text-gray-500 text-center">Active Member Discount applies after job-type waivers and includes rush fees.</p>
             </div>
 
             <!-- Total Card -->
@@ -217,7 +261,7 @@
                     <span id="displayTotal" class="text-5xl font-extrabold tracking-tighter">0.00</span>
                 </div>
                 <div id="discountBadge" class="hidden inline-block mt-2 bg-green-500/20 text-green-300 text-xs font-bold px-2 py-1 rounded">
-                    Educational Discount Applied
+                    Discount Applied
                 </div>
                 <p class="text-blue-200 text-xs mt-2">Includes material cost, machine wear & tear, and club labor fees.</p>
             </div>
@@ -241,8 +285,9 @@
         // --- CONFIGURATION START ---
         
         // Pricing Configuration
-        const HOURLY_MACHINE_RATE = 0.50; // $0.50 per hour of print time
-        const RUSH_FEE = 5.00;
+        const HOURLY_MACHINE_RATE = 1.50;
+        const RUSH_FEE = 8.00;
+        const AMD_RATE = 0.40;
 
         /* GOOGLE SHEETS INTEGRATION
            URL has been updated with your specific form ID.
@@ -254,6 +299,21 @@
         // State variables
         let currentTotal = 0.00;
         let breakdown = {};
+        let amdActive = false;
+
+        function optionalNumber(id, fallback) {
+            const raw = document.getElementById(id).value.trim();
+            return raw === '' ? fallback : Math.max(0, parseFloat(raw) || 0);
+        }
+
+        function toggleAMD() {
+            amdActive = !amdActive;
+            const button = document.getElementById('amdButton');
+            button.setAttribute('aria-pressed', String(amdActive));
+            button.classList.toggle('amd-active', amdActive);
+            button.querySelector('span').innerText = amdActive ? 'AMD Applied — 40% Off' : 'Apply AMD — 40% Off';
+            calculateTotal();
+        }
 
         // 1. Calculation Logic
         function calculateTotal() {
@@ -267,32 +327,24 @@
             
             // Get dropdown data
             const materialSelect = document.getElementById('materialType');
-            const materialCostPerGram = parseFloat(materialSelect.options[materialSelect.selectedIndex].dataset.cost);
+            const standardMaterialRate = parseFloat(materialSelect.options[materialSelect.selectedIndex].dataset.cost);
+            const materialCostPerGram = optionalNumber('materialRateOverride', standardMaterialRate);
             const materialName = materialSelect.options[materialSelect.selectedIndex].text; // Use Full Text
 
             // Base Costs
             let designSelect = document.getElementById('designService');
-            let designCost = parseFloat(designSelect.options[designSelect.selectedIndex].dataset.cost);
+            let designCost = optionalNumber('designCostOverride', parseFloat(designSelect.options[designSelect.selectedIndex].dataset.cost));
             let designName = designSelect.options[designSelect.selectedIndex].text;
 
-            // Labor Cost Logic (Updated for Special Case)
             let laborSelect = document.getElementById('laborService');
-            let laborCost = 0;
+            let laborCost = optionalNumber('laborCostOverride', parseFloat(laborSelect.options[laborSelect.selectedIndex].dataset.cost));
             let laborName = laborSelect.options[laborSelect.selectedIndex].text;
-            const specialLaborInput = document.getElementById('specialLaborInput');
-
-            if (laborSelect.value === 'special') {
-                specialLaborInput.classList.remove('hidden');
-                laborCost = parseFloat(document.getElementById('customLaborCost').value) || 0;
-                laborName = "Special Case (Discussed Price)"; 
-            } else {
-                specialLaborInput.classList.add('hidden');
-                laborCost = parseFloat(laborSelect.options[laborSelect.selectedIndex].dataset.cost);
-            }
 
             const costMaterial = weight * materialCostPerGram;
-            const costMachine = time * HOURLY_MACHINE_RATE;
-            const costRush = isRush ? RUSH_FEE : 0;
+            const machineRate = optionalNumber('machineRateOverride', HOURLY_MACHINE_RATE);
+            const costMachine = time * machineRate;
+            const rushRate = optionalNumber('rushFeeOverride', RUSH_FEE);
+            const costRush = isRush ? rushRate : 0;
 
             // Apply Discounts Logic
             let discountNote = "";
@@ -316,7 +368,13 @@
                 }
             }
 
-            const total = costMaterial + costMachine + designCost + laborCost + costRush;
+            const subtotal = costMaterial + costMachine + designCost + laborCost + costRush;
+            const amdDiscount = amdActive ? subtotal * AMD_RATE : 0;
+            if (amdActive) {
+                discountAmount += amdDiscount;
+                discountNote = discountNote ? `${discountNote} + AMD (40% off)` : 'AMD Active Member Discount (40% off)';
+            }
+            const total = Math.max(0, subtotal - amdDiscount);
 
             // Update State
             currentTotal = total.toFixed(2);
@@ -324,16 +382,22 @@
                 materialName: materialName,
                 weight: weight,
                 materialCost: costMaterial.toFixed(2),
+                materialRate: materialCostPerGram.toFixed(2),
                 hours: time,
                 machineCost: costMachine.toFixed(2),
+                machineRate: machineRate.toFixed(2),
                 designName: designName,
                 designCost: designCost.toFixed(2),
                 laborName: laborName,
                 laborCost: laborCost.toFixed(2),
                 rushCost: costRush.toFixed(2),
+                rushRate: rushRate.toFixed(2),
                 jobType: jobType,
                 jobTypeText: jobTypeText,
                 discountNote: discountNote,
+                discountAmount: discountAmount.toFixed(2),
+                amdActive: amdActive,
+                subtotal: subtotal.toFixed(2),
                 total: currentTotal
             };
 
@@ -355,6 +419,7 @@
             const studentName = document.getElementById('studentName').value;
             const projectName = document.getElementById('projectName').value;
             const projectDesc = document.getElementById('projectDescription').value;
+            const talonTechMember = document.getElementById('talonTechMember').value;
 
             if (!studentName || !projectName) {
                 alert("Please enter Client Name and Project Name.");
@@ -376,7 +441,10 @@
             
             formData.append('entry.1856043627', studentName);      // Client Name
             formData.append('entry.583953865', projectName);       // Project Name
-            formData.append('entry.60012897', projectDesc);        // Project Description
+            const descriptionForLog = talonTechMember
+                ? `${projectDesc}${projectDesc ? ' | ' : ''}TalonTech Member: ${talonTechMember}`
+                : projectDesc;
+            formData.append('entry.60012897', descriptionForLog);  // Description + member record
             
             // IMPORTANT: Sending breakdown.materialName (Full text) instead of value, as required by Google Forms
             formData.append('entry.397722630', breakdown.materialName); // Material
@@ -426,6 +494,7 @@
             document.getElementById('studentName').value = '';
             document.getElementById('projectName').value = '';
             document.getElementById('projectDescription').value = '';
+            document.getElementById('talonTechMember').value = '';
             document.getElementById('weight').value = '';
             document.getElementById('printTime').value = '';
             document.getElementById('materialType').selectedIndex = 0;
@@ -433,8 +502,12 @@
             document.getElementById('laborService').selectedIndex = 0;
             document.getElementById('jobType').selectedIndex = 0;
             document.getElementById('rushOrder').checked = false;
-            document.getElementById('customLaborCost').value = '';
-            document.getElementById('specialLaborInput').classList.add('hidden');
+            ['materialRateOverride', 'machineRateOverride', 'designCostOverride', 'laborCostOverride', 'rushFeeOverride'].forEach(id => document.getElementById(id).value = '');
+            amdActive = false;
+            const amdButton = document.getElementById('amdButton');
+            amdButton.setAttribute('aria-pressed', 'false');
+            amdButton.classList.remove('amd-active');
+            amdButton.querySelector('span').innerText = 'Apply AMD — 40% Off';
             
             calculateTotal();
 
@@ -455,6 +528,7 @@
             const name = document.getElementById('studentName').value || "Client";
             const project = document.getElementById('projectName').value || "Project";
             const description = document.getElementById('projectDescription').value || "";
+            const member = document.getElementById('talonTechMember').value || "Not listed";
             const date = new Date().toLocaleDateString();
 
             // Colors
@@ -481,6 +555,7 @@
             doc.text(`Date: ${date}`, 150, 50);
             doc.text(`Client: ${name}`, 20, 50);
             doc.text(`Project: ${project}`, 20, 55);
+            doc.text(`TalonTech Member: ${member}`, 20, 60);
             
             let yStart = 70; // Default table start
 
@@ -489,11 +564,11 @@
                 doc.setTextColor(80, 80, 80);
                 doc.setFontSize(9);
                 doc.setFont("helvetica", "italic");
-                doc.text(`Desc: ${description}`, 20, 60);
+                doc.text(`Desc: ${description}`, 20, 65);
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
-                yStart = 75; // Push table down slightly
+                yStart = 80; // Push table down slightly
             }
             
             // Job Type Tag
@@ -518,13 +593,13 @@
 
             // Material
             doc.text("Material", 25, y);
-            doc.text(`${breakdown.materialName} (${breakdown.weight}g @ $${document.querySelector('#materialType option:checked').dataset.cost}/g)`, 80, y);
+            doc.text(`${breakdown.materialName} (${breakdown.weight}g @ $${breakdown.materialRate}/g)`, 80, y);
             doc.text(`$${breakdown.materialCost}`, 170, y);
             y += 10;
 
             // Machine Time
             doc.text("Machine Time", 25, y);
-            doc.text(`${breakdown.hours} hours @ $${HOURLY_MACHINE_RATE}/hr`, 80, y);
+            doc.text(`${breakdown.hours} hours @ $${breakdown.machineRate}/hr`, 80, y);
             doc.text(`$${breakdown.machineCost}`, 170, y);
             y += 10;
 
@@ -558,6 +633,7 @@
                 doc.setFont("helvetica", "italic");
                 doc.text("Discount Applied:", 25, y);
                 doc.text(breakdown.discountNote, 80, y);
+                doc.text(`-$${breakdown.discountAmount}`, 170, y);
                 y += 10;
                 doc.setTextColor(0, 0, 0);
                 doc.setFont("helvetica", "normal");
